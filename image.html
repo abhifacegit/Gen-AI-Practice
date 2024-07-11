@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
+    <title>Page Title</title>
+</head>
+<body>
+    <div id="divBwToCol" style="visibility: hidden;">
+        <form id="myForm">
+            <input type="file" id="myFileInput" name="file">
+            <button type="submit">Upload</button>
+        </form>
+        <img id="original_imgShow" style="max-height: 300px;"></img>
+        <img id="colorized_imgShow" style="max-height: 300px;"></img>
+    </div>
+    <div id="divtxtPromptToImg">
+        <form id="frmTxtPromptToImg">
+            <input type="text" id="myPrompt" name="myPrompt">
+            <button type="submit">Create Image</button>
+            <img id="promptImg" style="max-height: 300px;"></img>
+        </form>
+    </div>
+</body>
+</html>
+
+<script>
+    $(document).ready(function() {
+        $('#myForm').on('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            var form = new FormData();
+            var file_data = $('#myFileInput').prop('files')[0];
+            form.append("file", file_data);
+            form.append("type", "image/jpeg");
+
+            $.ajax({
+                url: "http://127.0.0.1:8000/upload/",
+                method: "POST",
+                processData: false,
+                contentType: false,
+                data: form,
+                success: function(response) {
+                    debugger;
+                    console.log("Success response:", response);
+                    if (response.error) {
+                        alert("Error from server: " + response.error);
+                    } else {
+                        alert("Upload successful: " + response.filepath);
+                        $('#original_imgShow').attr('src', "http://127.0.0.1:8000" + response.original_image);
+                        $('#colorized_imgShow').attr('src', "http://127.0.0.1:8000" + response.colorized_image);
+                    }
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.error("Error response:", textStatus, errorThrown);
+                    alert("Upload failed: " + textStatus + " " + errorThrown);
+                }
+            }).done(function(response) {
+                console.log("Done handler response:", response);
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                console.error("Fail handler:", textStatus, errorThrown);
+            });
+        });
+
+        $('#frmTxtPromptToImg').on('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+            var myPrompt = $("#myPrompt").val();
+
+            $.ajax({
+                url: "http://127.0.0.1:8000/generateImg/",
+                type: 'GET',
+                data: { promptTxt: myPrompt },
+                dataType: 'json',
+                success: function(response) {
+                    debugger;
+                    console.log(response); // Replace with your logic to handle the response
+                    $("#promptImg").attr('src', 'data:image/png;base64,'+response.b64_json)
+                },
+                error: function(xhr, status, error) {
+                    debugger;
+                    console.error('Request failed with status:', status);
+                }
+            });
+        });
+    });
+
+    function checkAPI(){
+        //
+        debugger;
+        $.ajax({
+        type: 'GET',
+        url: 'http://127.0.0.1:8000/check/',
+        success: function (data) {
+            console.log('data: ', data);
+            alert(data);
+        }
+        });
+    }
+</script>
